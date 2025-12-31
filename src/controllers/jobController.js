@@ -4,6 +4,7 @@ import User from '../models/User.js';
 import Chat from '../models/Chat.js';
 import { createNotification } from '../utils/sendNotification.js';
 import { createActivity } from './activityController.js';
+import { broadcastAdminStats } from '../utils/broadcastStats.js';
 
 // @desc    Create a new job
 // @route   POST /api/jobs
@@ -41,6 +42,9 @@ export const createJob = async (req, res) => {
       message: `Posted job: ${job.title}`,
       isPublic: true,
     });
+
+    // Broadcast stats to admin
+    broadcastAdminStats();
 
     res.status(201).json({
       success: true,

@@ -8,6 +8,7 @@ import {
   sendPasswordResetEmail,
 } from '../utils/emailService.js';
 import { createActivity } from './activityController.js';
+import { broadcastAdminStats } from '../utils/broadcastStats.js';
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
@@ -70,6 +71,9 @@ export const register = async (req, res) => {
 
     // Generate token
     const token = generateToken(user._id);
+
+    // Broadcast stats to admin
+    broadcastAdminStats();
 
     res.status(201).json({
       success: true,

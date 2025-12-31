@@ -1,6 +1,7 @@
 import Transaction from '../models/Transaction.js';
 import User from '../models/User.js';
 import { createNotification } from '../utils/sendNotification.js';
+import { broadcastAdminStats } from '../utils/broadcastStats.js';
 
 // @desc    Get all withdrawal requests (Admin)
 // @route   GET /api/admin/withdrawals
@@ -82,6 +83,9 @@ export const approveWithdrawal = async (req, res) => {
       { link: `/transactions/${transaction._id}` }
     );
 
+    // Broadcast stats to admin
+    broadcastAdminStats();
+
     res.status(200).json({
       success: true,
       message: 'Withdrawal approved successfully',
@@ -149,6 +153,9 @@ export const rejectWithdrawal = async (req, res) => {
       `Your withdrawal request of $${transaction.amount} has been rejected. Amount has been refunded to your wallet.`,
       { link: `/transactions/${transaction._id}` }
     );
+
+    // Broadcast stats to admin
+    broadcastAdminStats();
 
     res.status(200).json({
       success: true,

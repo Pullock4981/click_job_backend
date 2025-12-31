@@ -342,7 +342,7 @@ export const getSystemStats = async (req, res) => {
     const completedJobs = await Job.countDocuments({ status: 'completed' });
     const totalWorks = await Work.countDocuments();
     const completedWorks = await Work.countDocuments({ status: 'approved' });
-    
+
     const totalTransactions = await Transaction.aggregate([
       { $match: { status: 'completed' } },
       { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -363,6 +363,31 @@ export const getSystemStats = async (req, res) => {
 
     const openTickets = await Ticket.countDocuments({ status: 'open' });
     const totalTickets = await Ticket.countDocuments();
+
+    // Graph Data: Last 7 days
+    const last7Days = [...Array(7)].map((_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }).reverse();
+
+    const graphData = await Promise.all(last7Days.map(async (date) => {
+      const nextDay = new Date(date);
+      nextDay.setDate(nextDay.getDate() + 1);
+
+      const dayUsers = await User.countDocuments({ createdAt: { $gte: date, $lt: nextDay } });
+      const dayEarnings = await Transaction.aggregate([
+        { $match: { type: 'earning', status: 'completed', createdAt: { $gte: date, $lt: nextDay } } },
+        { $group: { _id: null, total: { $sum: '$amount' } } },
+      ]);
+
+      return {
+        date: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        users: dayUsers,
+        earnings: dayEarnings[0]?.total || 0,
+      };
+    }));
 
     res.status(200).json({
       success: true,
@@ -393,6 +418,7 @@ export const getSystemStats = async (req, res) => {
           openTickets,
           totalTickets,
         },
+        graphData,
       },
     });
   } catch (error) {
