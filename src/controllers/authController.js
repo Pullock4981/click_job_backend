@@ -161,11 +161,17 @@ export const login = async (req, res) => {
           email: user.email,
           role: user.role,
           isVerified: user.isVerified,
+          walletBalance: user.walletBalance,
+          totalEarnings: user.totalEarnings,
+          isPremium: user.isPremium,
+          profilePicture: user.profilePicture,
+          balance: user.walletBalance + user.totalEarnings,
           createdAt: user.createdAt,
         },
         token,
       },
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -354,10 +360,16 @@ export const getMe = async (req, res) => {
           email: user.email,
           role: user.role,
           isVerified: user.isVerified,
+          walletBalance: user.walletBalance,
+          totalEarnings: user.totalEarnings,
+          isPremium: user.isPremium,
+          profilePicture: user.profilePicture,
+          balance: user.walletBalance + user.totalEarnings, // Compatibility with Wallet.jsx
           createdAt: user.createdAt,
         },
       },
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,

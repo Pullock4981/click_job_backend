@@ -117,7 +117,6 @@ export const updateUser = async (req, res) => {
 
     const updateData = {};
     if (name) updateData.name = name;
-    if (email) updateData.email = email;
     if (role) updateData.role = role;
     if (isVerified !== undefined) updateData.isVerified = isVerified;
     if (isPremium !== undefined) updateData.isPremium = isPremium;

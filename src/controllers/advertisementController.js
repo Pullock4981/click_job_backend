@@ -194,3 +194,39 @@ export const trackClick = async (req, res) => {
   }
 };
 
+// @desc    Get user's own advertisements
+// @route   GET /api/advertisements/my
+// @access  Private
+export const getMyAdvertisements = async (req, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+
+    const query = { createdBy: req.user._id };
+
+    const advertisements = await Advertisement.find(query)
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Advertisement.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        advertisements,
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message,
+    });
+  }
+};

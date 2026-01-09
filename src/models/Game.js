@@ -9,9 +9,10 @@ const gameSchema = new mongoose.Schema(
     },
     gameType: {
       type: String,
-      enum: ['quiz', 'puzzle', 'memory', 'typing', 'click', 'other'],
+      enum: ['quiz', 'puzzle', 'memory', 'typing', 'click', 'spin', 'other'],
       required: true,
     },
+
     score: {
       type: Number,
       required: true,

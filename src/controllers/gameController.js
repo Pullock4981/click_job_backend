@@ -242,3 +242,63 @@ export const getLeaderboard = async (req, res) => {
   }
 };
 
+// @desc    Spin the wheel
+// @route   POST /api/games/spin
+// @access  Private
+export const spinWheel = async (req, res) => {
+  try {
+    const segments = [
+      { amount: 0.0004, color: 'teal' },
+      { amount: 0.0001, color: 'pink' },
+      { amount: 0.0003, color: 'orange' },
+      { amount: 0.0001, color: 'magenta' },
+      { amount: 0.0002, color: 'green' },
+      { amount: 0.0002, color: 'blue' },
+      { amount: 0.0001, color: 'pink' },
+      { amount: 0.0001, color: 'rose' },
+    ];
+
+    const randomIndex = Math.floor(Math.random() * segments.length);
+    const result = segments[randomIndex];
+
+    // Create game record
+    const game = await Game.create({
+      user: req.user._id,
+      gameType: 'spin',
+      score: 1,
+      earnings: result.amount,
+      status: 'completed',
+    });
+
+    // Add earnings to user wallet
+    const user = await User.findById(req.user._id);
+    user.walletBalance += result.amount;
+    user.totalEarnings += result.amount;
+    await user.save();
+
+    // Create transaction
+    await Transaction.create({
+      user: req.user._id,
+      type: 'earning',
+      amount: result.amount,
+      status: 'completed',
+      description: `Earnings from Spin Wheel`,
+      metadata: { gameId: game._id },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        index: randomIndex,
+        amount: result.amount,
+        walletBalance: user.walletBalance
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message,
+    });
+  }
+};
