@@ -27,8 +27,17 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['user', 'employer', 'admin'],
+      enum: ['user', 'employer', 'admin', 'superadmin'],
       default: 'user',
+    },
+    phone: {
+      type: String,
+      default: '',
+    },
+    status: {
+      type: String,
+      enum: ['active', 'inactive', 'suspended'],
+      default: 'active',
     },
     isVerified: {
       type: Boolean,
@@ -54,7 +63,21 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    age: {
+      type: Number,
+      default: null,
+    },
+    country: {
+      type: String,
+      default: 'Bangladesh',
+    },
+    securityCode: {
+      type: String,
+      default: '',
+      select: false,
+    },
     bio: {
+
       type: String,
       default: '',
       maxlength: [500, 'Bio must be less than 500 characters'],

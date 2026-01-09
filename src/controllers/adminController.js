@@ -429,3 +429,143 @@ export const getSystemStats = async (req, res) => {
   }
 };
 
+// @desc    Get all admins
+// @route   GET /api/admin/accounts
+// @access  Private (Admin)
+export const getAdmins = async (req, res) => {
+  try {
+    const admins = await User.find({ role: { $in: ['admin', 'superadmin'] } })
+      .select('-password')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: admins.map(admin => ({
+        id: admin._id,
+        name: admin.name,
+        email: admin.email,
+        phone: admin.phone,
+        type: admin.role === 'superadmin' ? 'Super Admin' : 'Admin',
+        status: admin.status ? (admin.status.charAt(0).toUpperCase() + admin.status.slice(1)) : 'Active'
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Create new admin
+// @route   POST /api/admin/accounts
+// @access  Private (Admin)
+export const createAdmin = async (req, res) => {
+  try {
+    const { name, email, password, phone, type, status } = req.body;
+
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ success: false, message: 'User already exists' });
+    }
+
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: type === 'Super Admin' ? 'superadmin' : 'admin',
+      phone,
+      status: status ? status.toLowerCase() : 'active',
+      isVerified: true
+    });
+
+    res.status(201).json({
+      success: true,
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        type: user.role === 'superadmin' ? 'Super Admin' : 'Admin',
+        status: user.status ? (user.status.charAt(0).toUpperCase() + user.status.slice(1)) : 'Active'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Update admin
+// @route   PUT /api/admin/accounts/:id
+// @access  Private (Admin)
+export const updateAdminAccount = async (req, res) => {
+  try {
+    const { name, email, phone, type, status, password } = req.body;
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Admin not found' });
+    }
+
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (phone) user.phone = phone;
+    if (type) user.role = type === 'Super Admin' ? 'superadmin' : 'admin';
+    if (status) user.status = status.toLowerCase();
+    if (password) {
+      user.password = password;
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        type: user.role === 'superadmin' ? 'Super Admin' : 'Admin',
+        status: user.status ? (user.status.charAt(0).toUpperCase() + user.status.slice(1)) : 'Active'
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Delete admin
+// @route   DELETE /api/admin/accounts/:id
+// @access  Private (Admin)
+export const deleteAdminAccount = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Admin not found' });
+    }
+
+    if (req.user._id.toString() === req.params.id) {
+      return res.status(400).json({ success: false, message: 'Cannot delete yourself' });
+    }
+
+    await user.deleteOne();
+    res.status(200).json({ success: true, message: 'Admin removed' });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message,
+    });
+  }
+};
+

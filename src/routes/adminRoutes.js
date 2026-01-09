@@ -9,6 +9,10 @@ import {
   updateJobAdmin,
   deleteJobAdmin,
   getSystemStats,
+  getAdmins,
+  createAdmin,
+  updateAdminAccount,
+  deleteAdminAccount,
 } from '../controllers/adminController.js';
 import {
   getAllWithdrawals,
@@ -41,6 +45,12 @@ router.put('/withdrawals/:id/reject', rejectWithdrawal);
 
 // System stats
 router.get('/stats', getSystemStats);
+
+// Admin Management
+router.get('/accounts', getAdmins);
+router.post('/accounts', createAdmin);
+router.put('/accounts/:id', updateAdminAccount);
+router.delete('/accounts/:id', deleteAdminAccount);
 
 export default router;
 

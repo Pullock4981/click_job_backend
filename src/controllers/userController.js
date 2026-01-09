@@ -15,17 +15,17 @@ export const getMyProfile = async (req, res) => {
     // Get additional stats
     const stats = {
       postedJobs: await Job.countDocuments({ employer: req.user._id }),
-      activeJobs: await Job.countDocuments({ 
-        employer: req.user._id, 
-        status: { $in: ['open', 'in-progress'] } 
+      activeJobs: await Job.countDocuments({
+        employer: req.user._id,
+        status: { $in: ['open', 'in-progress'] }
       }),
-      completedWorks: await Work.countDocuments({ 
-        worker: req.user._id, 
-        status: 'approved' 
+      completedWorks: await Work.countDocuments({
+        worker: req.user._id,
+        status: 'approved'
       }),
-      pendingWorks: await Work.countDocuments({ 
-        worker: req.user._id, 
-        status: { $in: ['pending', 'in-progress', 'submitted'] } 
+      pendingWorks: await Work.countDocuments({
+        worker: req.user._id,
+        status: { $in: ['pending', 'in-progress', 'submitted'] }
       }),
       totalReferrals: await Referral.countDocuments({ referrer: req.user._id }),
       totalDeposits: await Transaction.aggregate([
@@ -40,7 +40,7 @@ export const getMyProfile = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: { 
+      data: {
         user,
         stats,
       },
@@ -59,13 +59,17 @@ export const getMyProfile = async (req, res) => {
 // @access  Private
 export const updateProfile = async (req, res) => {
   try {
-    const { name, bio, skills, profilePicture } = req.body;
+    const { name, bio, skills, profilePicture, age, country, securityCode } = req.body;
 
     const updateData = {};
     if (name) updateData.name = name;
+    if (age) updateData.age = age;
+    if (country) updateData.country = country;
+    if (securityCode) updateData.securityCode = securityCode;
     if (bio !== undefined) updateData.bio = bio;
     if (skills) updateData.skills = skills;
     if (profilePicture) updateData.profilePicture = profilePicture;
+
 
     const user = await User.findByIdAndUpdate(req.user._id, updateData, {
       new: true,
