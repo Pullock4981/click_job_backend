@@ -86,15 +86,21 @@ const userSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
-    walletBalance: {
+    earningBalance: {
       type: Number,
       default: 0,
-      min: 0,
+    },
+    depositBalance: {
+      type: Number,
+      default: 0,
     },
     totalEarnings: {
       type: Number,
       default: 0,
-      min: 0,
+    },
+    numericId: {
+      type: Number,
+      unique: true,
     },
     referralCode: {
       type: String,
@@ -181,22 +187,38 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Generate referral code before saving
+// Generate referral code and numeric ID before saving
 userSchema.pre('save', async function (next) {
-  if (!this.referralCode && this.isNew) {
+  if (this.isNew) {
     // Generate unique referral code
-    let isUnique = false;
-    let referralCode;
-    while (!isUnique) {
-      const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      const namePrefix = this.name.substring(0, 3).toUpperCase().replace(/\s/g, '') || 'USR';
-      referralCode = `${namePrefix}${randomCode}`;
-      const existing = await mongoose.model('User').findOne({ referralCode });
-      if (!existing) {
-        isUnique = true;
+    if (!this.referralCode) {
+      let isUnique = false;
+      let referralCode;
+      while (!isUnique) {
+        const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const namePrefix = this.name.substring(0, 3).toUpperCase().replace(/\s/g, '') || 'USR';
+        referralCode = `${namePrefix}${randomCode}`;
+        const existing = await mongoose.model('User').findOne({ referralCode });
+        if (!existing) {
+          isUnique = true;
+        }
       }
+      this.referralCode = referralCode;
     }
-    this.referralCode = referralCode;
+
+    // Generate unique numeric ID
+    if (!this.numericId) {
+      let isIdUnique = false;
+      let numericId;
+      while (!isIdUnique) {
+        numericId = Math.floor(10000 + Math.random() * 90000);
+        const existingId = await mongoose.model('User').findOne({ numericId });
+        if (!existingId) {
+          isIdUnique = true;
+        }
+      }
+      this.numericId = numericId;
+    }
   }
   next();
 });

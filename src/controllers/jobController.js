@@ -13,27 +13,72 @@ export const createJob = async (req, res) => {
   try {
     const {
       title,
-      description,
       category,
-      budget,
-      budgetType,
-      requirements,
-      deadline,
-      images,
-      tags,
+      subCategory,
+      selectedZone,
+      hiddenCountries,
+      tasks,
+      proof,
+      workerNeed,
+      workerEarn,
+      requiredScreenshots,
+      estimatedDays,
+      boostPeriod,
+      scheduleTime,
     } = req.body;
+
+    const totalBudget = workerNeed * workerEarn;
+    const minSpend = 0.80;
+
+    if (totalBudget < minSpend) {
+      return res.status(400).json({
+        success: false,
+        message: `Minimum spend is $${minSpend.toFixed(2)}`,
+      });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (user.depositBalance < totalBudget) {
+      return res.status(400).json({
+        success: false,
+        message: 'Insufficient deposit balance to post this job',
+      });
+    }
 
     const job = await Job.create({
       title,
-      description,
+      description: title, // use title as description if not provided separately
       category,
-      budget,
-      budgetType: budgetType || 'fixed',
+      subCategory,
+      selectedZone,
+      hiddenCountries,
+      taskInstructions: tasks,
+      requiredProof: proof,
+      workerNeed,
+      workerEarn,
+      budget: totalBudget,
+      maxParticipants: workerNeed,
+      requiredScreenshots,
+      estimatedDays,
+      boostPeriod,
+      scheduleTime,
       employer: req.user._id,
-      requirements: requirements || [],
-      deadline: deadline || null,
-      images: images || [],
-      tags: tags || [],
+      adminStatus: 'pending',
+      status: 'pending-approval',
+    });
+
+    // Deduct balance
+    user.depositBalance -= totalBudget;
+    await user.save();
+
+    // Create Transaction
+    await Transaction.create({
+      user: req.user._id,
+      type: 'payment',
+      amount: totalBudget,
+      status: 'completed',
+      description: `Job posting: ${title}`,
+      relatedJob: job._id,
     });
 
     // Create activity
@@ -297,43 +342,43 @@ export const updateJob = async (req, res) => {
   }
 };
 
-// @desc    Delete job
-// @route   DELETE /api/jobs/:id
-// @access  Private (Job Owner or Admin)
 export const deleteJob = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
 
     if (!job) {
-      return res.status(404).json({
-        success: false,
-        message: 'Job not found',
-      });
+      return res.status(404).json({ success: false, message: 'Job not found' });
     }
 
-    // Allow delete if user is job owner or admin
-    if (
-      job.employer.toString() !== req.user._id.toString() &&
-      req.user.role !== 'admin'
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to delete this job',
-      });
+    if (job.employer.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    const remainingWorkers = (job.workerNeed || 0) - (job.currentParticipants || 0);
+    const refundAmount = remainingWorkers * (job.workerEarn || 0);
+
+    if (refundAmount > 0) {
+      const employer = await User.findById(job.employer);
+      if (employer) {
+        employer.depositBalance += refundAmount;
+        await employer.save();
+
+        await Transaction.create({
+          user: employer._id,
+          type: 'deposit',
+          amount: refundAmount,
+          status: 'completed',
+          description: `Refund for deleted job: ${job.title}`,
+          relatedJob: job._id
+        });
+      }
     }
 
     await job.deleteOne();
 
-    res.status(200).json({
-      success: true,
-      message: 'Job deleted successfully',
-    });
+    res.status(200).json({ success: true, message: 'Job deleted successfully' });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message,
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 

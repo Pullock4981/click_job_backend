@@ -21,6 +21,9 @@ import activityRoutes from './routes/activityRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import companyRoutes from './routes/companyRoutes.js';
+import lotteryRoutes from './routes/lotteryRoutes.js';
+import publicRoutes from './routes/publicRoutes.js';
 
 // Load env vars
 dotenv.config();
@@ -56,6 +59,9 @@ app.use('/api/activity', activityRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/company', companyRoutes);
+app.use('/api/lottery', lotteryRoutes);
+app.use('/api/public', publicRoutes);
 
 // Root route
 app.get('/', (req, res) => {

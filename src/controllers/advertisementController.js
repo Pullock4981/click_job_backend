@@ -1,4 +1,6 @@
 import Advertisement from '../models/Advertisement.js';
+import AdsRate from '../models/AdsRate.js';
+import ClickEarnAd from '../models/ClickEarnAd.js';
 
 // @desc    Get active advertisements
 // @route   GET /api/advertisements
@@ -228,5 +230,72 @@ export const getMyAdvertisements = async (req, res) => {
       message: 'Server error',
       error: error.message,
     });
+  }
+};
+
+// --- Ads Rate Controllers ---
+
+export const getAdsRates = async (req, res) => {
+  try {
+    const rates = await AdsRate.find().sort({ duration: 1 });
+    res.status(200).json({ success: true, data: rates });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const createAdsRate = async (req, res) => {
+  try {
+    const rate = await AdsRate.create(req.body);
+    res.status(201).json({ success: true, data: rate });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const deleteAdsRate = async (req, res) => {
+  try {
+    await AdsRate.findByIdAndDelete(req.params.id);
+    res.status(200).json({ success: true, message: 'Ads rate deleted' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// --- Click & Earn Ads Controllers ---
+
+export const getClickEarnAds = async (req, res) => {
+  try {
+    const ads = await ClickEarnAd.find().populate('user', 'name email').sort({ createdAt: -1 });
+    res.status(200).json({ success: true, data: ads });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const createClickEarnAd = async (req, res) => {
+  try {
+    const { title, waitingTime, earning, link } = req.body;
+    const slug = `ads_${Date.now()}`;
+    const ad = await ClickEarnAd.create({
+      user: req.user._id,
+      title,
+      waitingTime,
+      earning,
+      link,
+      slug
+    });
+    res.status(201).json({ success: true, data: ad });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const deleteClickEarnAd = async (req, res) => {
+  try {
+    await ClickEarnAd.findByIdAndDelete(req.params.id);
+    res.status(200).json({ success: true, message: 'Ad deleted' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };

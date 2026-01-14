@@ -51,6 +51,14 @@ const advertisementSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    cost: {
+      type: Number,
+      default: 0,
+    },
+    duration: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

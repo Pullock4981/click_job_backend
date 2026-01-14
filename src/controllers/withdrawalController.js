@@ -130,9 +130,9 @@ export const rejectWithdrawal = async (req, res) => {
       });
     }
 
-    // Refund to user wallet
+    // Refund to user earning balance
     const user = await User.findById(transaction.user);
-    user.walletBalance += transaction.amount;
+    user.earningBalance += transaction.amount;
     await user.save();
 
     // Update transaction status

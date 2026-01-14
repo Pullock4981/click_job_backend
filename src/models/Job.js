@@ -16,16 +16,9 @@ const jobSchema = new mongoose.Schema(
     category: {
       type: String,
       required: [true, 'Please provide a category'],
-      enum: [
-        'data-entry',
-        'writing',
-        'design',
-        'programming',
-        'marketing',
-        'translation',
-        'research',
-        'other',
-      ],
+    },
+    subCategory: {
+      type: String,
     },
     budget: {
       type: Number,
@@ -44,8 +37,21 @@ const jobSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['open', 'in-progress', 'completed', 'cancelled'],
-      default: 'open',
+      enum: ['open', 'in-progress', 'completed', 'cancelled', 'pending-approval'],
+      default: 'pending-approval',
+    },
+    adminStatus: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending'
+    },
+    deleteRequested: {
+      type: Boolean,
+      default: false
+    },
+    adminRemark: {
+      type: String,
+      default: ''
     },
     requirements: {
       type: [String],
@@ -88,11 +94,44 @@ const jobSchema = new mongoose.Schema(
     },
     maxParticipants: {
       type: Number,
-      default: null, // null means unlimited
+      default: 0,
+    },
+    workerNeed: {
+      type: Number,
+      required: true,
+      default: 0
+    },
+    workerEarn: {
+      type: Number,
+      required: true,
+      default: 0
+    },
+    requiredScreenshots: {
+      type: Number,
+      default: 1
+    },
+    estimatedDays: {
+      type: Number,
+      default: 3
+    },
+    boostPeriod: {
+      type: String,
+      default: 'None'
+    },
+    scheduleTime: {
+      type: Date
+    },
+    selectedZone: {
+      type: String,
+      default: 'International'
+    },
+    hiddenCountries: {
+      type: [String],
+      default: []
     },
     taskInstructions: {
-      type: String,
-      default: '',
+      type: [String],
+      default: [],
     },
     requiredProof: {
       type: String,
@@ -108,7 +147,6 @@ const jobSchema = new mongoose.Schema(
     },
     taskType: {
       type: String,
-      enum: ['watch-video', 'data-entry', 'writing', 'design', 'other'],
       default: 'other',
     },
     reports: [

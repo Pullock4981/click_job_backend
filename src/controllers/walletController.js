@@ -8,13 +8,14 @@ import { processReferralEarnings } from '../controllers/referralController.js';
 // @access  Private
 export const getWallet = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('walletBalance totalEarnings');
+    const user = await User.findById(req.user._id).select('earningBalance depositBalance totalEarnings');
 
     res.status(200).json({
       success: true,
       data: {
         wallet: {
-          balance: user.walletBalance,
+          earningBalance: user.earningBalance,
+          depositBalance: user.depositBalance,
           totalEarnings: user.totalEarnings,
         },
       },
@@ -54,17 +55,16 @@ export const deposit = async (req, res) => {
       metadata: req.body.metadata || {},
     });
 
-    // In production, you would verify payment with payment gateway here
-    // For now, we'll auto-complete it
+    // In production, verify payment gateway here
     transaction.status = 'completed';
     await transaction.save();
 
-    // Update user wallet
+    // Update user deposit balance
     const user = await User.findById(req.user._id);
-    user.walletBalance += amount;
+    user.depositBalance += amount;
     await user.save();
 
-    // Process referral earnings (5% commission to referrer)
+    // Process referral earnings
     await processReferralEarnings(req.user._id, 'deposit', amount);
 
     // Notify user
@@ -79,7 +79,7 @@ export const deposit = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Deposit successful',
-      data: { transaction, walletBalance: user.walletBalance },
+      data: { transaction, depositBalance: user.depositBalance },
     });
   } catch (error) {
     res.status(500).json({
@@ -106,10 +106,10 @@ export const withdraw = async (req, res) => {
 
     const user = await User.findById(req.user._id);
 
-    if (user.walletBalance < amount) {
+    if (user.earningBalance < amount) {
       return res.status(400).json({
         success: false,
-        message: 'Insufficient balance',
+        message: 'Insufficient earning balance',
       });
     }
 
@@ -124,17 +124,14 @@ export const withdraw = async (req, res) => {
       metadata: { accountDetails: accountDetails || {} },
     });
 
-    // Deduct from wallet
-    user.walletBalance -= amount;
+    // Deduct from earning balance
+    user.earningBalance -= amount;
     await user.save();
-
-    // In production, process withdrawal through payment gateway
-    // For now, we'll keep it pending for admin approval
 
     res.status(200).json({
       success: true,
       message: 'Withdrawal request submitted',
-      data: { transaction, walletBalance: user.walletBalance },
+      data: { transaction, earningBalance: user.earningBalance },
     });
   } catch (error) {
     res.status(500).json({

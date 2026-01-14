@@ -103,17 +103,17 @@ export const subscribe = async (req, res) => {
     const user = await User.findById(req.user._id);
 
     // Check if user has enough balance (for paid plans)
-    if (planDetails.price > 0 && user.walletBalance < planDetails.price) {
+    if (planDetails.price > 0 && user.depositBalance < planDetails.price) {
       return res.status(400).json({
         success: false,
-        message: 'Insufficient balance',
+        message: 'Insufficient deposit balance',
       });
     }
 
     // Deduct payment if paid plan
     let transaction = null;
     if (planDetails.price > 0) {
-      user.walletBalance -= planDetails.price;
+      user.depositBalance -= planDetails.price;
       await user.save();
 
       transaction = await Transaction.create({

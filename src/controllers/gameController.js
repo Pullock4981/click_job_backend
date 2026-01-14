@@ -86,7 +86,7 @@ export const playGame = async (req, res) => {
 
     // Add earnings to user wallet
     const user = await User.findById(req.user._id);
-    user.walletBalance += earnings;
+    user.earningBalance += earnings;
     user.totalEarnings += earnings;
     await user.save();
 
@@ -112,7 +112,7 @@ export const playGame = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Game result saved',
-      data: { game, earnings, walletBalance: user.walletBalance },
+      data: { game, earnings, earningBalance: user.earningBalance },
     });
   } catch (error) {
     res.status(500).json({
@@ -272,7 +272,7 @@ export const spinWheel = async (req, res) => {
 
     // Add earnings to user wallet
     const user = await User.findById(req.user._id);
-    user.walletBalance += result.amount;
+    user.earningBalance += result.amount;
     user.totalEarnings += result.amount;
     await user.save();
 
@@ -291,7 +291,7 @@ export const spinWheel = async (req, res) => {
       data: {
         index: randomIndex,
         amount: result.amount,
-        walletBalance: user.walletBalance
+        earningBalance: user.earningBalance
       },
     });
   } catch (error) {

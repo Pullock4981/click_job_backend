@@ -32,7 +32,7 @@ export const getMyReferralCode = async (req, res) => {
 export const getMyReferrals = async (req, res) => {
   try {
     const referrals = await Referral.find({ referrer: req.user._id })
-      .populate('referred', 'name email createdAt walletBalance totalEarnings')
+      .populate('referred', 'name email createdAt earningBalance depositBalance totalEarnings')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -186,7 +186,7 @@ export const processReferralEarnings = async (userId, type, amount) => {
 
     // Add to referrer's wallet
     const referrer = await User.findById(user.referredBy);
-    referrer.walletBalance += commission;
+    referrer.earningBalance += commission;
     referrer.totalEarnings += commission;
     await referrer.save();
 

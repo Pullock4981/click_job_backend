@@ -51,7 +51,10 @@ export const uploadMultipleFiles = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Files uploaded successfully',
-      data: { files },
+      data: {
+        files,
+        urls: files.map(f => f.url)
+      },
     });
   } catch (error) {
     res.status(500).json({
