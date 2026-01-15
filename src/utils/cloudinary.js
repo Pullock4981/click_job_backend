@@ -1,28 +1,22 @@
-import { v2 as cloudinary } from 'cloudinary';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+// Local Storage Configuration
+const uploadDir = 'uploads';
 
-// Storage configuration
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'click_job',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx'],
-    transformation: [
-      {
-        width: 1000,
-        height: 1000,
-        crop: 'limit',
-        quality: 'auto',
-      },
-    ],
+// Ensure upload directory exists
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
   },
 });
 
@@ -54,29 +48,24 @@ export const uploadSingle = (fieldName) => upload.single(fieldName);
 export const uploadMultiple = (fieldName, maxCount = 5) =>
   upload.array(fieldName, maxCount);
 
-// Delete file from Cloudinary
-export const deleteFile = async (publicId) => {
+// Mock Cloudinary Delete (No-op or FS unlink)
+export const deleteFile = async (filePath) => {
   try {
-    const result = await cloudinary.uploader.destroy(publicId);
-    return result;
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+    return { result: 'ok' };
   } catch (error) {
-    console.error('Error deleting file from Cloudinary:', error);
-    throw error;
+    console.error('Error deleting file:', error);
+    // Don't throw, just log
   }
 };
 
-// Upload file directly (for programmatic uploads)
-export const uploadFile = async (filePath, folder = 'click_job') => {
-  try {
-    const result = await cloudinary.uploader.upload(filePath, {
-      folder: folder,
-    });
-    return result;
-  } catch (error) {
-    console.error('Error uploading file to Cloudinary:', error);
-    throw error;
-  }
+// Mock Cloudinary Upload (No-op as we already have the file)
+export const uploadFile = async (filePath) => {
+  // Already on disk
+  return { secure_url: filePath, public_id: filePath };
 };
 
-export default cloudinary;
+export default { upload, uploadSingle, uploadMultiple, deleteFile, uploadFile };
 

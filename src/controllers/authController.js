@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import Transaction from '../models/Transaction.js';
 import Referral from '../models/Referral.js';
 import crypto from 'crypto';
 import { generateToken } from '../utils/generateToken.js';
@@ -352,6 +353,13 @@ export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
 
+    // Calculate pending deposit
+    const pendingDepositAggregation = await Transaction.aggregate([
+      { $match: { user: user._id, type: 'deposit', status: 'pending' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    const pendingDeposit = pendingDepositAggregation[0]?.total || 0;
+
     res.status(200).json({
       success: true,
       data: {
@@ -363,6 +371,7 @@ export const getMe = async (req, res) => {
           isVerified: user.isVerified,
           earningBalance: user.earningBalance,
           depositBalance: user.depositBalance,
+          pendingDeposit, // Added pending deposit info
           totalEarnings: user.totalEarnings,
           numericId: user.numericId,
           isPremium: user.isPremium,

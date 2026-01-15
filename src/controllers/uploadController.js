@@ -12,13 +12,15 @@ export const uploadSingleFile = async (req, res) => {
       });
     }
 
+    const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+
     res.status(200).json({
       success: true,
       message: 'File uploaded successfully',
       data: {
-        url: req.file.path,
+        url: fileUrl,
         publicId: req.file.filename,
-        secureUrl: req.file.secure_url,
+        secureUrl: fileUrl,
       },
     });
   } catch (error) {

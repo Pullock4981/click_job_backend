@@ -2,6 +2,7 @@ import Job from '../models/Job.js';
 import Work from '../models/Work.js';
 import User from '../models/User.js';
 import Chat from '../models/Chat.js';
+import Transaction from '../models/Transaction.js';
 import { createNotification } from '../utils/sendNotification.js';
 import { createActivity } from './activityController.js';
 import { broadcastAdminStats } from '../utils/broadcastStats.js';

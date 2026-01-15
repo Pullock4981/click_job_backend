@@ -38,6 +38,8 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/api/', apiLimiter); // Apply rate limiting to all API routes
+app.use('/uploads', express.static('uploads'));
+
 
 // Routes
 app.use('/api/auth', authRoutes);

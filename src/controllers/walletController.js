@@ -43,43 +43,33 @@ export const deposit = async (req, res) => {
       });
     }
 
+    console.log('Deposit Request:', { amount, paymentMethod, referenceId, user: req.user._id });
+
     // Create transaction
     const transaction = await Transaction.create({
       user: req.user._id,
       type: 'deposit',
       amount,
-      status: 'pending',
+      status: 'pending', // Explicitly pending
       description: `Deposit of $${amount}`,
       referenceId: referenceId || null,
       paymentMethod: paymentMethod || 'wallet',
       metadata: req.body.metadata || {},
     });
 
-    // In production, verify payment gateway here
-    transaction.status = 'completed';
-    await transaction.save();
-
-    // Update user deposit balance
-    const user = await User.findById(req.user._id);
-    user.depositBalance += amount;
-    await user.save();
-
-    // Process referral earnings
-    await processReferralEarnings(req.user._id, 'deposit', amount);
-
     // Notify user
     await createNotification(
       req.user._id,
       'payment',
-      'Deposit Successful',
-      `Your deposit of $${amount} has been processed successfully.`,
+      'Deposit Request Submitted',
+      `Your deposit request of $${amount} has been submitted and is pending approval.`,
       { link: `/transactions/${transaction._id}` }
     );
 
     res.status(200).json({
       success: true,
-      message: 'Deposit successful',
-      data: { transaction, depositBalance: user.depositBalance },
+      message: 'Deposit request submitted successfully. Please wait for admin approval.',
+      data: { transaction },
     });
   } catch (error) {
     res.status(500).json({
@@ -137,6 +127,82 @@ export const withdraw = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Convert earning balance to deposit balance
+// @route   POST /api/wallet/convert
+// @access  Private
+export const convertEarningsToDeposit = async (req, res) => {
+  try {
+    const { amount } = req.body;
+
+    if (!amount || amount < 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Minimum conversion amount is $1',
+      });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    if (user.earningBalance < amount) {
+      return res.status(400).json({
+        success: false,
+        message: 'Insufficient earning balance',
+      });
+    }
+
+    const feePercent = 0.10; // 10%
+    const fee = amount * feePercent;
+    const netAmount = amount - fee;
+
+    // Deduct from earning
+    user.earningBalance -= amount;
+
+    // Add to deposit
+    user.depositBalance += netAmount;
+
+    await user.save();
+
+    // Create Transaction Record
+    await Transaction.create({
+      user: req.user._id,
+      type: 'conversion',
+      amount: amount, // Logging the full amount converted
+      status: 'completed',
+      description: `Converted $${amount} earnings to deposit (Fee: $${fee.toFixed(3)})`,
+      metadata: {
+        fee,
+        netAmount,
+        convertedFrom: 'earning',
+        convertedTo: 'deposit'
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `Successfully converted $${amount} to deposit balance`,
+      data: {
+        earningBalance: user.earningBalance,
+        depositBalance: user.depositBalance
+      }
+    });
+
+  } catch (error) {
+    console.error('Conversion error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during conversion',
       error: error.message,
     });
   }

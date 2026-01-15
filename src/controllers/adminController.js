@@ -1077,7 +1077,7 @@ export const updateTransactionStatus = async (req, res) => {
     const transaction = await Transaction.findByIdAndUpdate(req.params.id, { status }, { new: true });
 
     // If approved deposit, add to depositBalance
-    if (status === 'completed' && transaction.type === 'deposit') {
+    if (status === 'completed' && transaction.type === 'deposit' && oldTransaction.status !== 'completed') {
       const user = await User.findById(transaction.user);
       if (user) {
         user.depositBalance += transaction.amount;

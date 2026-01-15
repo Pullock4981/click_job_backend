@@ -17,6 +17,7 @@ const transactionSchema = new mongoose.Schema(
         'referral',
         'refund',
         'bonus',
+        'conversion',
       ],
       required: true,
     },
@@ -39,7 +40,7 @@ const transactionSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ['bank', 'card', 'paypal', 'stripe', 'razorpay', 'wallet'],
+      // Removed strict enum to allow flexible payment methods like bKash, Nagad, etc.
     },
     relatedJob: {
       type: mongoose.Schema.Types.ObjectId,
